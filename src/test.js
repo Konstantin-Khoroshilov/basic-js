@@ -1,87 +1,99 @@
 const { NotImplementedError } = require('../extensions/index.js');
 
 /**
- * Create transformed array based on the control sequences that original
- * array contains
- * 
- * @param {Array} arr initial array
- * @returns {Array} transformed array
+ * Implement class VigenereCipheringMachine that allows us to create
+ * direct and reverse ciphering machines according to task description
  * 
  * @example
  * 
- * transform([1, 2, 3, '--double-next', 4, 5]) => [1, 2, 3, 4, 4, 5]
- * transform([1, 2, 3, '--discard-prev', 4, 5]) => [1, 2, 4, 5]
+ * const directMachine = new VigenereCipheringMachine();
+ * 
+ * const reverseMachine = new VigenereCipheringMachine(false);
+ * 
+ * directMachine.encrypt('attack at dawn!', 'alphonse') => 'AEIHQX SX DLLU!'
+ * 
+ * directMachine.decrypt('AEIHQX SX DLLU!', 'alphonse') => 'ATTACK AT DAWN!'
+ * 
+ * reverseMachine.encrypt('attack at dawn!', 'alphonse') => '!ULLD XS XQHIEA'
+ * 
+ * reverseMachine.decrypt('AEIHQX SX DLLU!', 'alphonse') => '!NWAD TA KCATTA'
  * 
  */
-function transform(arr) {
-  if (!Array.isArray(arr)) {
-    throw new Error("'arr' parameter must be an instance of the Array!")
-  } else {
-    const decideFate = (prev, item, next) => {
-      //пропустить
-      if (
-        //я - команда
-        item === '--discard-next' ||
-        item === '--discard-prev' ||
-        item === '--double-next' ||
-        item === '--double-prev' ||
-        //пред. удаляет меня
-        prev === '--discard-next' ||
-        //след. удаляет меня
-        next === '--discard-prev' && prev !== '--double-next'
-      ) {
-        return 'skip';
-      }
-      //утроить
-      if (
-        //пред. удваивает меня
-        prev === '--double-next' &&
-        //след. удваивает меня
-        next === '--double-prev'
-      ) {
-        return 'triple';
-      }
-      if (prev === '--double-next' && next === '--discard-prev') {
-        return 'add';
-      }
-      //удвоить
-      if (
-        //пред. удваивает меня
-        prev === '--double-next' ||
-        //след. удваивает меня
-        next === '--double-prev'
-      ) {
-        return 'double';
-      }
-      return 'add';
+class VigenereCipheringMachine {
+  constructor(direct) {
+    this.direct = direct === true || direct === undefined ? true : false;
+    this.reverse = direct === false ? true : false;
+    this.alphaet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+  }
+
+  _getKey(message, keyword) {
+    if (message.length / keyword.length === 1) {
+      return keyword;
     }
-    const result = [];
-    for (let i = 0; i < arr.length; i++) {
-      if (arr.length === 1) {
-        const fate = decideFate(arr[i], arr[i], arr[i]);
-        if (fate === 'add') result.push(arr[i]);
-        continue;
+    if (message.length / keyword.length > 1) {
+      let key = '';
+      for (let i = 0; i < Math.floor(message.length / keyword.length); i++) {
+        key += keyword;
       }
-      if (i === arr.length - 1) {
-        const fate = decideFate(arr[i - 1], arr[i], arr[i]);
-        if (fate === 'add') result.push(arr[i]);
-        if (fate === 'double') result.push(arr[i], arr[i]);
-        continue;
-      }
-      if (i === 0) {
-        const fate = decideFate(arr[i], arr[i], arr[i + 1]);
-        if (fate === 'add') result.push(arr[i]);
-        if (fate === 'double') result.push(arr[i], arr[i]);
-        continue;
-      }
-      const fate = decideFate(arr[i - 1], arr[i], arr[i + 1]);
-      console.log(fate)
-      if (fate === 'add') result.push(arr[i]);
-      if (fate === 'double') result.push(arr[i], arr[i]);
-      if (fate === 'triple') result.push(arr[i], arr[i], arr[i]);
+      key += keyword.slice(0, message.length % keyword.length);
+      return key;
     }
-    return result;
+    if (message / keyword < 1) {
+      return keyword.slice(0, message.length % keyword.length);
+    }
+  }
+
+  encrypt(message, keyword) {
+    if (message === undefined || keyword === undefined) {
+      throw new Error('Incorrect arguments!')
+    } else {
+      let result = '';
+      let currentCharIndex = 0;
+      const trimmedMessage = message.replace(/[^a-z]/gi, '');
+      const key = this._getKey(trimmedMessage, keyword);
+      for (let i = 0; i < message.length; i++) {
+        if (/[a-z]/gi.test(message[i])) {
+          const charCodesSum = this.alphaet.findIndex(letter => letter === trimmedMessage[currentCharIndex].toLowerCase()) + this.alphaet.findIndex(letter => letter === key[currentCharIndex].toLowerCase());
+          const encryptedCharCode = charCodesSum < 26 ? charCodesSum : charCodesSum - 26;
+          const encryptedChar = this.alphaet[encryptedCharCode];
+          result += encryptedChar;
+          currentCharIndex++;
+        } else {
+          result += message[i];
+        }
+      }
+      return result.toUpperCase();
+    }
+  }
+  decrypt(message, keyword) {
+    if (message === undefined || keyword === undefined) {
+      throw new Error('Incorrect arguments!')
+    } else {
+      let result = '';
+      let currentCharIndex = 0;
+      const trimmedMessage = message.replace(/[^a-z]/gi, '');
+      const key = this._getKey(trimmedMessage, keyword);
+      for (let i = 0; i < message.length; i++) {
+        if (/[a-z]/gi.test(message[i])) {
+          const charCodesSum = this.alphaet.findIndex(letter => letter === trimmedMessage[currentCharIndex].toLowerCase()) + this.alphaet.findIndex(letter => letter === key[currentCharIndex].toLowerCase());
+          const encryptedCharCode = Math.abs(charCodesSum) < 26 ? Math.abs(charCodesSum) : Math.abs(charCodesSum) - 26;
+          const encryptedChar = this.alphaet[encryptedCharCode];
+          result += encryptedChar;
+          currentCharIndex++;
+        } else {
+          result += message[i];
+        }
+      }
+      return result.toUpperCase();
+    }
   }
 }
 
-console.log(transform([1, 2, 3, '--double-next', 1337, '--discard-prev', 4, 5]))
+
+
+const lol = new VigenereCipheringMachine();
+
+// console.log(lol.encrypt('attackatdawn', 'LEMONLEMONLE'))
+// console.log(lol.encrypt('attackatdawn', 'LEMONLEMONLE'))
+console.log(lol.decrypt('AEIHQX SX DLLU!', 'alphonse') === 'ATTACK AT DAWN!')
+console.log(lol.decrypt('AEIHQX SX DLLU!', 'alphonse'), 'ATTACK AT DAWN!')
