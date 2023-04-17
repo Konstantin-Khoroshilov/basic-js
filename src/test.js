@@ -1,37 +1,87 @@
 const { NotImplementedError } = require('../extensions/index.js');
 
 /**
- * Create a repeating string based on the given parameters
- *  
- * @param {String} str string to repeat
- * @param {Object} options options object 
- * @return {String} repeating string
+ * Create transformed array based on the control sequences that original
+ * array contains
  * 
- *
+ * @param {Array} arr initial array
+ * @returns {Array} transformed array
+ * 
  * @example
  * 
- *
+ * transform([1, 2, 3, '--double-next', 4, 5]) => [1, 2, 3, 4, 4, 5]
+ * transform([1, 2, 3, '--discard-prev', 4, 5]) => [1, 2, 4, 5]
+ * 
  */
-function repeater(str, options) {
-  const string = str + '';
-  const separator = options.separator != undefined  ? options.separator + '' : '+';
-  const addition = options.addition === undefined ? '' : options.addition === null ? 'null' : options.addition + '';
-  console.log(addition)
-  const additionSeparator = options.additionSeparator != undefined  ? options.additionSeparator + '' : '|';
-  const repeatTimes = options.repeatTimes != undefined  ? options.repeatTimes : 1;
-  const additionRepeatTimes = options.additionRepeatTimes != undefined  ? options.additionRepeatTimes : 1;
-  const getFullString = (string, separator, repeatTimes, addition = '') => {
-    let result = '';
-    for (let i = 1; i <= repeatTimes; i++) {
-      if (i === repeatTimes) {
-        result += string + addition;
-      } else {
-        result += string + addition + separator;
+function transform(arr) {
+  if (!Array.isArray(arr)) {
+    throw new Error("'arr' parameter must be an instance of the Array!")
+  } else {
+    const decideFate = (prev, item, next) => {
+      //пропустить
+      if (
+        //я - команда
+        item === '--discard-next' ||
+        item === '--discard-prev' ||
+        item === '--double-next' ||
+        item === '--double-prev' ||
+        //пред. удаляет меня
+        prev === '--discard-next' ||
+        //след. удаляет меня
+        next === '--discard-prev' && prev !== '--double-next'
+      ) {
+        return 'skip';
       }
+      //утроить
+      if (
+        //пред. удваивает меня
+        prev === '--double-next' &&
+        //след. удваивает меня
+        next === '--double-prev'
+      ) {
+        return 'triple';
+      }
+      if (prev === '--double-next' && next === '--discard-prev') {
+        return 'add';
+      }
+      //удвоить
+      if (
+        //пред. удваивает меня
+        prev === '--double-next' ||
+        //след. удваивает меня
+        next === '--double-prev'
+      ) {
+        return 'double';
+      }
+      return 'add';
+    }
+    const result = [];
+    for (let i = 0; i < arr.length; i++) {
+      if (arr.length === 1) {
+        const fate = decideFate(arr[i], arr[i], arr[i]);
+        if (fate === 'add') result.push(arr[i]);
+        continue;
+      }
+      if (i === arr.length - 1) {
+        const fate = decideFate(arr[i - 1], arr[i], arr[i]);
+        if (fate === 'add') result.push(arr[i]);
+        if (fate === 'double') result.push(arr[i], arr[i]);
+        continue;
+      }
+      if (i === 0) {
+        const fate = decideFate(arr[i], arr[i], arr[i + 1]);
+        if (fate === 'add') result.push(arr[i]);
+        if (fate === 'double') result.push(arr[i], arr[i]);
+        continue;
+      }
+      const fate = decideFate(arr[i - 1], arr[i], arr[i + 1]);
+      console.log(fate)
+      if (fate === 'add') result.push(arr[i]);
+      if (fate === 'double') result.push(arr[i], arr[i]);
+      if (fate === 'triple') result.push(arr[i], arr[i], arr[i]);
     }
     return result;
   }
-  return getFullString(string, separator, repeatTimes, getFullString(addition, additionSeparator, additionRepeatTimes));
 }
 
-console.log(repeater(null, { repeatTimes: 3, separator: '??? ', addition: null, additionRepeatTimes: 3, additionSeparator: '!!!' }) === 'nullnull!!!null!!!null??? nullnull!!!null!!!null??? nullnull!!!null!!!null')
+console.log(transform([1, 2, 3, '--double-next', 1337, '--discard-prev', 4, 5]))
