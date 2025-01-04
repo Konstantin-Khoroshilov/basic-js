@@ -20,72 +20,92 @@ const { NotImplementedError } = require('../extensions/index.js');
  * 
  */
 class VigenereCipheringMachine {
-  constructor(direct) {
-    this.direct = direct === true || direct === undefined ? true : false;
-    this.reverse = direct === false ? true : false;
-    this.alphaet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+  constructor(isMachineDirect) {
+    this._isMachineDirect = isMachineDirect === true || isMachineDirect === undefined ? true : false;
+    this._alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+    this._square = {
+      a: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'],
+      b: ['b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a'],
+      c: ['c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b'],
+      d: ['d', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c'],
+      e: ['e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd'],
+      f: ['f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e'],
+      g: ['g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f'],
+      h: ['h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g'],
+      i: ['i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],
+      j: ['j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
+      k: ['k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'],
+      l: ['l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'],
+      m: ['m', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'],
+      n: ['n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
+      o: ['o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'],
+      p: ['p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o'],
+      q: ['q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p'],
+      r: ['r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q'],
+      s: ['s', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r'],
+      t: ['t', 'u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's'],
+      u: ['u', 'v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'],
+      v: ['v', 'w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u'],
+      w: ['w', 'x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v'],
+      x: ['x', 'y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w'],
+      y: ['y', 'z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x'],
+      z: ['z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y'],
+    }
   }
 
-  _getKey(message, keyword) {
-    if (message.length / keyword.length === 1) {
-      return keyword;
-    }
-    if (message.length / keyword.length > 1) {
-      let key = '';
-      for (let i = 0; i < Math.floor(message.length / keyword.length); i++) {
-        key += keyword;
-      }
-      key += keyword.slice(0, message.length % keyword.length);
-      return key;
-    }
-    if (message / keyword < 1) {
-      return keyword.slice(0, message.length % keyword.length);
-    }
+  _getEncryptedChar(messageChar, keyChar) {
+    const messageCharIndex = this._alphabet.indexOf(messageChar);
+    const encryptedChar = this._square[keyChar][messageCharIndex];
+    return encryptedChar;
   }
 
-  encrypt(message, keyword) {
-    if (message === undefined || keyword === undefined) {
-      throw new Error('Incorrect arguments!')
-    } else {
-      let result = '';
-      let currentCharIndex = 0;
-      const trimmedMessage = message.replace(/[^a-z]/gi, '');
-      const key = this._getKey(trimmedMessage, keyword);
-      for (let i = 0; i < message.length; i++) {
-        if (/[a-z]/gi.test(message[i])) {
-          const charCodesSum = this.alphaet.findIndex(letter => letter === trimmedMessage[currentCharIndex].toLowerCase()) + this.alphaet.findIndex(letter => letter === key[currentCharIndex].toLowerCase());
-          const encryptedCharCode = charCodesSum < 26 ? charCodesSum : charCodesSum - 26;
-          const encryptedChar = this.alphaet[encryptedCharCode];
-          result += encryptedChar;
-          currentCharIndex++;
-        } else {
-          result += message[i];
-        }
-      }
-      return result.toUpperCase();
-    }
+  _getDecryptedChar(encryptedMessageChar, keyChar) {
+    const encryptedCharIndex = this._square[keyChar].indexOf(encryptedMessageChar);
+    const decryptedChar = this._alphabet[encryptedCharIndex];
+    return decryptedChar;
   }
-  decrypt(message, keyword) {
-    if (message === undefined || keyword === undefined) {
-      throw new Error('Incorrect arguments!')
-    } else {
-      let result = '';
-      let currentCharIndex = 0;
-      const trimmedMessage = message.replace(/[^a-z]/gi, '');
-      const key = this._getKey(trimmedMessage, keyword);
-      for (let i = 0; i < message.length; i++) {
-        if (/[a-z]/gi.test(message[i])) {
-          const charCodesSum = this.alphaet.findIndex(letter => letter === trimmedMessage[currentCharIndex].toLowerCase()) + this.alphaet.findIndex(letter => letter === key[currentCharIndex].toLowerCase());
-          const encryptedCharCode = Math.abs(charCodesSum) < 26 ? Math.abs(charCodesSum) : Math.abs(charCodesSum) - 26;
-          const encryptedChar = this.alphaet[encryptedCharCode];
-          result += encryptedChar;
-          currentCharIndex++;
-        } else {
-          result += message[i];
-        }
-      }
-      return result.toUpperCase();
+
+  _getTrimmedMessage(message) {
+    return message.split('').filter(char => /[a-z]/gi.test(char)).join('');
+  }
+
+  _getRepeatedKey(key, length) {
+    return key.length > length
+      ? key.slice(0, length)
+      : key.padEnd(length, key);
+  }
+
+  _getTransformedMessage(messageArg, keyArg, transformFunc, isMachineDirect) {
+    if (!messageArg || !keyArg) {
+      throw new Error('Incorrect arguments!');
     }
+    const message = messageArg.toLowerCase();
+    const key = keyArg.toLowerCase();
+    let resultMessage = '';
+    const trimmedMessage = this._getTrimmedMessage(message);
+    const repeatedKey = this._getRepeatedKey(key, trimmedMessage.length);
+    let repeatedKeyCharIndex = 0;
+    for (let msgCharPos = 0; msgCharPos < message.length; msgCharPos++) {
+      let msgChar = message[msgCharPos];
+      const keyChar = repeatedKey[repeatedKeyCharIndex];
+      const msgCharIsLatin = /[a-z]/gi.test(msgChar);
+      if (msgCharIsLatin) {
+        msgChar = transformFunc(msgChar, keyChar);
+        repeatedKeyCharIndex += 1;
+      }
+      resultMessage += msgChar;
+    }
+    resultMessage = resultMessage.toUpperCase();
+    resultMessage = isMachineDirect ? resultMessage : resultMessage.split('').reverse().join('');
+    return resultMessage;
+  }
+
+  encrypt(message, key) {
+    return this._getTransformedMessage(message, key, this._getEncryptedChar.bind(this), this._isMachineDirect);
+  }
+
+  decrypt(encryptedMessage, key) {
+    return this._getTransformedMessage(encryptedMessage, key, this._getDecryptedChar.bind(this), this._isMachineDirect);
   }
 }
 
