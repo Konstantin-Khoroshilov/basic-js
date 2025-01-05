@@ -23,9 +23,20 @@ const { NotImplementedError } = require('../extensions/index.js');
  *  [1, 1, 1]
  * ]
  */
-function minesweeper(/* matrix */) {
-  throw new NotImplementedError('Not implemented');
-  // remove line with error and write your code here
+function minesweeper(matrix) {
+  return matrix.map((matrixLine, matrixLineIndex) => matrixLine.map((matrixCell, matrixCellIndex) => {
+    const topLeft = matrix[matrixLineIndex - 1] ? matrix[matrixLineIndex - 1][matrixCellIndex - 1] : false;
+    const topMiddle = matrix[matrixLineIndex - 1] ? matrix[matrixLineIndex - 1][matrixCellIndex] : false;
+    const topRight = matrix[matrixLineIndex - 1] ? matrix[matrixLineIndex - 1][matrixCellIndex + 1] : false;
+    const middleLeft = matrix[matrixLineIndex] ? matrix[matrixLineIndex][matrixCellIndex - 1] : false;
+    const middleRight = matrix[matrixLineIndex] ? matrix[matrixLineIndex][matrixCellIndex + 1] : false;
+    const bottomLeft = matrix[matrixLineIndex + 1] ? matrix[matrixLineIndex + 1][matrixCellIndex - 1] : false;
+    const bottomMiddle = matrix[matrixLineIndex + 1] ? matrix[matrixLineIndex + 1][matrixCellIndex] : false;
+    const bottomRight = matrix[matrixLineIndex + 1] ? matrix[matrixLineIndex + 1][matrixCellIndex + 1] : false;
+    return [topLeft, topMiddle, topRight, middleLeft, middleRight, bottomLeft, bottomMiddle, bottomRight].reduce((res, item) => {
+      return item ? res + 1 : res;
+    }, 0);
+  }));
 }
 
 module.exports = {
